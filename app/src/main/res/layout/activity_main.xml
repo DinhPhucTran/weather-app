@@ -11,14 +11,14 @@
     <ImageView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:src="@drawable/clear_day"
+        android:src="@drawable/bg_clear_day_edited"
         android:scaleType="centerCrop"
         android:id="@+id/mainBg"/>
 
     <ImageView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:src="@drawable/clear_day"
+        android:src="@drawable/bg_clear_day"
         android:scaleType="centerCrop"
         android:id="@+id/blurBg"/>
 

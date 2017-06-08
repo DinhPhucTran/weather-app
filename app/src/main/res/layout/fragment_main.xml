@@ -26,7 +26,15 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_centerHorizontal="true">
+            android:layout_centerHorizontal="true"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:layout_width="65dp"
+                android:layout_height="65dp"
+                android:src="@drawable/partly_cloudy_day"
+                android:layout_marginRight="5dp"
+                android:id="@+id/icon_weather"/>
 
             <TextView
                 android:id="@+id/tv_temp"
@@ -95,7 +103,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="10dp"
                 android:text="@string/arrow_up"
-                android:textColor="@color/colorPrimary"
+                android:textColor="@color/colorLightBlue"
                 android:textSize="30sp"/>
 
             <TextView
