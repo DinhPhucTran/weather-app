@@ -6,4 +6,6 @@
     <color name="colorAppBar">#78acacac</color>
     <color name="colorTextWhite">#ffffff</color>
     <color name="colorLightBlue">#6c87ff</color>
+    <color name="colorTextWhiteSecondary">#b7ffffff</color>
+    <color name="colorPanelBg">#20000000</color>
 </resources>

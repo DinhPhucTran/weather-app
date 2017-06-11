@@ -1,12 +1,22 @@
 package tk.trandinhphuc.weatherapp;
 
-import android.graphics.Color;
+import android.Manifest;
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Criteria;
+import android.location.Geocoder;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Build;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.TabLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 
@@ -15,38 +25,39 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
-import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import ir.mirrajabi.viewfilter.core.ViewFilter;
-import ir.mirrajabi.viewfilter.renderers.BlurRenderer;
-import jp.wasabeef.blurry.Blurry;
+import com.bumptech.glide.Glide;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
+
+import jp.wasabeef.glide.transformations.BlurTransformation;
+import tk.trandinhphuc.weatherapp.fragment.ChartFragment;
 import tk.trandinhphuc.weatherapp.fragment.MainFragment;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements LocationListener, AsyncResponse {
 
-    /**
-     * The {@link android.support.v4.view.PagerAdapter} that will provide
-     * fragments for each of the sections. We use a
-     * {@link FragmentPagerAdapter} derivative, which will keep every
-     * loaded fragment in memory. If this becomes too memory intensive, it
-     * may be best to switch to a
-     * {@link android.support.v4.app.FragmentStatePagerAdapter}.
-     */
+    static final String TAG = "---> MainActivity";
+
     private SectionsPagerAdapter mSectionsPagerAdapter;
 
-    /**
-     * The {@link ViewPager} that will host the section contents.
-     */
     private ViewPager mViewPager;
     private CoordinatorLayout mMainLayout;
     private AppBarLayout mAppBarLayout;
@@ -54,10 +65,31 @@ public class MainActivity extends AppCompatActivity {
     private ImageView mMainBg;
     private ImageView mBlurBg;
 
+    private LocationManager mLocationManager;
+    private String provider;
+
+    public static double lat;
+    public static double lng;
+
+    private JsonTask mJsonTask;
+    private JSONObject mJsonObjet;
+    private JSONObject mCurrentJsonObject;
+    private JSONObject mDailyJsonObject;
+    private JSONArray mDailyDataArray;
+    private String mIconCode;
+
+    private Geocoder mGeoCoder;
+    private List<Address> mAddresses;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mMainLayout = (CoordinatorLayout) findViewById(R.id.main_content);
+        mAppBarLayout = (AppBarLayout) findViewById(R.id.appbar);
+        mMainBg = (ImageView) findViewById(R.id.mainBg);
+        mBlurBg = (ImageView) findViewById(R.id.blurBg);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -73,48 +105,26 @@ public class MainActivity extends AppCompatActivity {
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(mViewPager);
 
-        /*FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });*/
-
         getWindow().getDecorView().setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                         | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         }
 
+        mJsonTask = new JsonTask();
+        mJsonTask.delegate = this;
 
+        mGeoCoder = new Geocoder(this, Locale.getDefault());
+        mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        Criteria criteria = new Criteria();
+        provider = mLocationManager.getBestProvider(criteria, false);
 
-        mMainLayout = (CoordinatorLayout) findViewById(R.id.main_content);
-        mAppBarLayout = (AppBarLayout) findViewById(R.id.appbar);
-        mMainBg = (ImageView) findViewById(R.id.mainBg);
-        mBlurBg = (ImageView) findViewById(R.id.blurBg);
-
-        //Make sure view is created to make Blurry working
-        ViewTreeObserver observer = mMainLayout.getViewTreeObserver();
-        observer.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-
-            @Override
-            public void onGlobalLayout() {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                    mMainLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                } else {
-                    mMainBg.getViewTreeObserver().removeGlobalOnLayoutListener(this);
-                }
-                Blurry.with(MainActivity.this)
-                        .radius(10)
-                        .sampling(8)
-                        .async()
-                        .capture(mBlurBg)
-                        .into((mBlurBg));
-            }
-        });
+//        Glide.with(this).load(R.drawable.bg_cloudy).into(mMainBg);
+//        Glide.with(this).load(R.drawable.bg_cloudy)
+//                .bitmapTransform(new BlurTransformation(this, 25))
+//                .into(mBlurBg);
+//        setBackground(R.drawable.bg_sunny14);
 
         final ViewPager.OnPageChangeListener onPageChangeListener = new ViewPager.OnPageChangeListener() {
             @Override
@@ -124,9 +134,9 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onPageSelected(int position) {
-                if(position == 0){
+                if (position == 0) {
                     mBlurBg.animate().alpha(0.0f);
-                } else{
+                } else {
                     mBlurBg.animate().alpha(1.0f);
                 }
             }
@@ -139,14 +149,19 @@ public class MainActivity extends AppCompatActivity {
 
         mViewPager.addOnPageChangeListener(onPageChangeListener);
         //to call onPageSelected on first page
-        mViewPager.post(new Runnable()
-        {
+        mViewPager.post(new Runnable() {
             @Override
-            public void run()
-            {
+            public void run() {
                 onPageChangeListener.onPageSelected(mViewPager.getCurrentItem());
             }
         });
+
+        Location location = getLastKnownLocation(); //mLocationManager.getLastKnownLocation(provider);
+        if (location != null) {
+            onLocationChanged(location);
+        } else {
+            Toast.makeText(this, "Location null", Toast.LENGTH_SHORT).show();
+        }
     }
 
     public int getStatusBarHeight() {
@@ -157,6 +172,36 @@ public class MainActivity extends AppCompatActivity {
         }
         return result;
     }
+
+    public void setBackground(int backgroundId) {
+        Glide.with(this).load(backgroundId).into(mMainBg);
+        Glide.with(this).load(backgroundId)
+                .bitmapTransform(new BlurTransformation(this, 25))
+                .into(mBlurBg);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        mLocationManager.requestLocationUpdates(provider, 400, 1, this);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        mLocationManager.removeUpdates(this);
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -180,40 +225,118 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    /**
-     * A placeholder fragment containing a simple view.
-     */
-    /*public static class PlaceholderFragment extends Fragment {
-        *//**
-         * The fragment argument representing the section number for this
-         * fragment.
-         *//*
-        private static final String ARG_SECTION_NUMBER = "section_number";
+    @Override
+    public void onLocationChanged(Location location) {
+        lat = location.getLatitude();
+        lng = location.getLongitude();
+        Toast.makeText(this, "Location changed to " + location.toString(), Toast.LENGTH_SHORT).show();
 
-        public PlaceholderFragment() {
+        try {
+            mAddresses = mGeoCoder.getFromLocation(lat, lng, 1);
+            int max = mAddresses.get(0).getMaxAddressLineIndex();
+            StringBuilder address = new StringBuilder();
+            for(int i = 0; i < max; i++){
+                address.append(mAddresses.get(0).getAddressLine(i));
+            }
+            String city = mAddresses.get(0).getLocality();
+            MainFragment.getInstance().setCity(city);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+        mJsonTask.execute("http://www.weathersite.somee.com/api/Weather?lat=" + lat + "&lng=" + lng);
+    }
 
-        *//**
-         * Returns a new instance of this fragment for the given section
-         * number.
-         *//*
-        public static PlaceholderFragment newInstance(int sectionNumber) {
-            PlaceholderFragment fragment = new PlaceholderFragment();
-            Bundle args = new Bundle();
-            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
-            fragment.setArguments(args);
-            return fragment;
-        }
+    @Override
+    public void onStatusChanged(String s, int i, Bundle bundle) {
 
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-            TextView textView = (TextView) rootView.findViewById(R.id.section_label);
-            textView.setText(getString(R.string.section_format, getArguments().getInt(ARG_SECTION_NUMBER)));
-            return rootView;
+    }
+
+    @Override
+    public void onProviderEnabled(String s) {
+
+    }
+
+    @Override
+    public void onProviderDisabled(String s) {
+
+    }
+
+    private Location getLastKnownLocation() {
+        List<String> providers = mLocationManager.getProviders(true);
+        Location bestLocation = null;
+        for (String provider : providers) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                // TODO: Consider calling
+            }
+            Location l = mLocationManager.getLastKnownLocation(provider);
+            if (l == null) {
+                continue;
+            }
+            if (bestLocation == null || l.getAccuracy() < bestLocation.getAccuracy()) {
+                // Found best last known location: %s", l);
+                bestLocation = l;
+            }
         }
-    }*/
+        return bestLocation;
+    }
+
+    @Override
+    public void onJsonLoaded(String json) {
+        try {
+            mJsonObjet = new JSONObject(json);
+            mCurrentJsonObject = mJsonObjet.getJSONObject("currently");
+            mDailyJsonObject = mJsonObjet.getJSONObject("daily");
+            mDailyDataArray = mDailyJsonObject.getJSONArray("data");
+
+            MainFragment.temp = mCurrentJsonObject.getDouble("temperature");
+            MainFragment.summary = mCurrentJsonObject.getString("summary");
+            MainFragment.low = mDailyDataArray.getJSONObject(0).getDouble("temperatureMin");
+            MainFragment.high = mDailyDataArray.getJSONObject(0).getDouble("temperatureMax");
+            MainFragment.wind = mCurrentJsonObject.getDouble("windSpeed");
+            MainFragment.humidity = mCurrentJsonObject.getDouble("humidity");
+            MainFragment.precipitation = mCurrentJsonObject.getDouble("precipProbability");
+            MainFragment.cloud = mCurrentJsonObject.getDouble("cloudCover");
+
+            mIconCode = mCurrentJsonObject.getString("icon");
+            if("wind".equals(mIconCode)) {
+                setBackground(R.drawable.bg_hail);
+                MainFragment.icon = R.drawable.wind;
+            } else if("clear-day".equals(mIconCode)) {
+                setBackground(R.drawable.bg_clear_day_edited);
+                MainFragment.icon = R.drawable.clear_day;
+            } else if("clear-night".equals(mIconCode)) {
+                setBackground(R.drawable.bg_clear_day_edited);
+                MainFragment.icon = R.drawable.clear_night;
+            } else if("partly-cloudy-day".equals(mIconCode)) {
+                setBackground(R.drawable.bg_cloudy3);
+                MainFragment.icon = R.drawable.partly_cloudy_day;
+            } else if("partly-cloudy-night".equals(mIconCode)) {
+                setBackground(R.drawable.bg_cloudy15);
+                MainFragment.icon = R.drawable.partly_cloudy_night;
+            } else if("cloudy".equals(mIconCode)) {
+                setBackground(R.drawable.bg_cloudy);
+                MainFragment.icon = R.drawable.cloudy;
+            } else if("fog".equals(mIconCode)) {
+                setBackground(R.drawable.bg_fog_mist);
+                MainFragment.icon = R.drawable.fog;
+            } else if("sleet".equals(mIconCode)) {
+                setBackground(R.drawable.bg_so_cold);
+                MainFragment.icon = R.drawable.sleet;
+            }  else if("snow".equals(mIconCode)) {
+                setBackground(R.drawable.bg_so_cold);
+                MainFragment.icon = R.drawable.snow;
+            } else if("rain".equals(mIconCode)) {
+                setBackground(R.drawable.bg_rain);
+                MainFragment.icon = R.drawable.rain;
+            }
+
+            getSupportFragmentManager().beginTransaction().detach(MainFragment.getInstance()).commit();
+            getSupportFragmentManager().beginTransaction().attach(MainFragment.getInstance()).commit();
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
 
     /**
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
@@ -227,10 +350,14 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public Fragment getItem(int position) {
-            // getItem is called to instantiate the fragment for the given page.
-            // Return a PlaceholderFragment (defined as a static inner class below).
-            //return PlaceholderFragment.newInstance(position + 1);
-            return MainFragment.newInstance("", "");
+            switch (position) {
+                case 0:
+                    return MainFragment.newInstance();
+                case 1:
+                    return ChartFragment.newInstance();
+
+            }
+            return MainFragment.newInstance();
         }
 
         @Override

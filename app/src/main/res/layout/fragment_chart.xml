@@ -1,0 +1,22 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             xmlns:tools="http://schemas.android.com/tools"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent"
+             tools:context="tk.trandinhphuc.weatherapp.fragment.ChartFragment">
+
+    <com.github.mikephil.charting.charts.LineChart
+        android:id="@+id/daily_chart"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"/>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/daily_chart">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/json_text"/>
+    </ScrollView>
+
+</RelativeLayout>

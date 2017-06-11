@@ -5,6 +5,10 @@
     <string name="degree">&#176;</string>
     <string name="arrow_down">&#8595;</string>
     <string name="arrow_up">&#8593;</string>
+    <string name="wind">WIND</string>
+    <string name="humidity">HUMIDITY</string>
+    <string name="precipitation">PRECIPITATION</string>
+    <string name="cloud_cover">CLOUD COVER</string>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
