@@ -39,12 +39,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.github.mikephil.charting.data.Entry;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -81,6 +83,9 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     private Geocoder mGeoCoder;
     private List<Address> mAddresses;
 
+    public static List<Entry> dailyLowEntries;
+    public static List<Entry> dailyHighEntries;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -101,7 +106,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         // Set up the ViewPager with the sections adapter.
         mViewPager = (ViewPager) findViewById(R.id.container);
         mViewPager.setAdapter(mSectionsPagerAdapter);
-        mViewPager.setPadding(0, 0, 0, getNavigationBarHeight());
+        //mViewPager.setPadding(0, 0, 0, getNavigationBarHeight());
 
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(mViewPager);
@@ -111,8 +116,11 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                         | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-            getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
+            //getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
         }
+
+        dailyLowEntries = new ArrayList<>();
+        dailyHighEntries = new ArrayList<>();
 
         mJsonTask = new JsonTask();
         mJsonTask.delegate = this;
@@ -302,47 +310,55 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
             mDailyJsonObject = mJsonObjet.getJSONObject("daily");
             mDailyDataArray = mDailyJsonObject.getJSONArray("data");
 
+            dailyLowEntries.clear();
+            JSONObject daily;
+            for(int i = 0; i < mDailyDataArray.length(); i++) {
+                daily = mDailyDataArray.getJSONObject(i);
+                dailyLowEntries.add(new Entry((float)daily.getLong("time"), (float)daily.getDouble("temperatureMin")));
+            }
+            ChartFragment.invalidateChart();
+
             //MainFragment.temp = mCurrentJsonObject.getDouble("temperature");
-            MainFragment.getInstance().setTemp(mCurrentJsonObject.getDouble("temperature"));
-            MainFragment.summary = mCurrentJsonObject.getString("summary");
-            MainFragment.low = mDailyDataArray.getJSONObject(0).getDouble("temperatureMin");
-            MainFragment.high = mDailyDataArray.getJSONObject(0).getDouble("temperatureMax");
-            MainFragment.wind = mCurrentJsonObject.getDouble("windSpeed");
-            MainFragment.humidity = mCurrentJsonObject.getDouble("humidity");
-            MainFragment.precipitation = mCurrentJsonObject.getDouble("precipProbability");
-            MainFragment.cloud = mCurrentJsonObject.getDouble("cloudCover");
+            MainFragment.setTemp(mCurrentJsonObject.getDouble("temperature"));
+            MainFragment.setSummary(mCurrentJsonObject.getString("summary"));
+            MainFragment.setLow(mDailyDataArray.getJSONObject(0).getDouble("temperatureMin"));
+            MainFragment.setHigh(mDailyDataArray.getJSONObject(0).getDouble("temperatureMax"));
+            MainFragment.setWind(mCurrentJsonObject.getDouble("windSpeed"));
+            MainFragment.setHumidity(mCurrentJsonObject.getDouble("humidity"));
+            MainFragment.setPrecipitation(mCurrentJsonObject.getDouble("precipProbability"));
+            MainFragment.setCloud(mCurrentJsonObject.getDouble("cloudCover"));
 
             mIconCode = mCurrentJsonObject.getString("icon");
             if("wind".equals(mIconCode)) {
                 setBackground(R.drawable.bg_hail);
-                MainFragment.icon = R.drawable.wind;
+                MainFragment.setIcon(R.drawable.wind);
             } else if("clear-day".equals(mIconCode)) {
                 setBackground(R.drawable.bg_clear_day_edited);
-                MainFragment.icon = R.drawable.clear_day;
+                MainFragment.setIcon(R.drawable.clear_day);
             } else if("clear-night".equals(mIconCode)) {
                 setBackground(R.drawable.bg_clear_day_edited);
-                MainFragment.icon = R.drawable.clear_night;
+                MainFragment.setIcon(R.drawable.clear_night);
             } else if("partly-cloudy-day".equals(mIconCode)) {
                 setBackground(R.drawable.bg_cloudy3);
-                MainFragment.icon = R.drawable.partly_cloudy_day;
+                MainFragment.setIcon(R.drawable.partly_cloudy_day);
             } else if("partly-cloudy-night".equals(mIconCode)) {
                 setBackground(R.drawable.bg_cloudy15);
-                MainFragment.icon = R.drawable.partly_cloudy_night;
+                MainFragment.setIcon(R.drawable.partly_cloudy_night);
             } else if("cloudy".equals(mIconCode)) {
                 setBackground(R.drawable.bg_cloudy);
-                MainFragment.icon = R.drawable.cloudy;
+                MainFragment.setIcon(R.drawable.cloudy);
             } else if("fog".equals(mIconCode)) {
                 setBackground(R.drawable.bg_fog_mist);
-                MainFragment.icon = R.drawable.fog;
+                MainFragment.setIcon(R.drawable.fog);
             } else if("sleet".equals(mIconCode)) {
                 setBackground(R.drawable.bg_so_cold);
-                MainFragment.icon = R.drawable.sleet;
+                MainFragment.setIcon(R.drawable.sleet);
             }  else if("snow".equals(mIconCode)) {
                 setBackground(R.drawable.bg_so_cold);
-                MainFragment.icon = R.drawable.snow;
+                MainFragment.setIcon(R.drawable.snow);
             } else if("rain".equals(mIconCode)) {
                 setBackground(R.drawable.bg_rain);
-                MainFragment.icon = R.drawable.rain;
+                MainFragment.setIcon(R.drawable.rain);
             }
 
             getSupportFragmentManager().beginTransaction().detach(MainFragment.getInstance()).commit();

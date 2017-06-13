@@ -20,15 +20,15 @@ public class MainFragment extends Fragment {
     private static MainFragment instance;
 
     private TextView mTvCity;
-    private ImageView mIconWeather;
-    private TextView mTvTemp;
-    private TextView mTvSummary;
-    private TextView mTvLow;
-    private TextView mTvHigh;
-    private TextView mTvWind;
-    private TextView mTvHumidity;
-    private TextView mTvPreci;
-    private TextView mTvCloud;
+    private static ImageView mIconWeather;
+    private static TextView mTvTemp;
+    private static TextView mTvSummary;
+    private static TextView mTvLow;
+    private static TextView mTvHigh;
+    private static TextView mTvWind;
+    private static TextView mTvHumidity;
+    private static TextView mTvPreci;
+    private static TextView mTvCloud;
 
     private static String mCity;
     public static double temp;
@@ -40,6 +40,7 @@ public class MainFragment extends Fragment {
     public static double cloud;
     public static String summary;
     public static int icon;
+    private static Context context;
 
 
 
@@ -66,6 +67,7 @@ public class MainFragment extends Fragment {
         if (getArguments() != null) {
 
         }
+        context = getContext();
     }
 
     @Override
@@ -108,8 +110,6 @@ public class MainFragment extends Fragment {
         if(icon != 0){
             Glide.with(getContext()).load(icon).into(mIconWeather);
         }
-
-        Toast.makeText(getContext(), "MainFragment started: " + temp, Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -133,16 +133,65 @@ public class MainFragment extends Fragment {
             mTvCity.setText(mCity);
     }
 
-    public void setTemp(double t){
+    public static void setTemp(double t){
         temp = t;
         if(mTvTemp != null)
             mTvTemp.setText( (int)temp + "");
     }
 
-    public void setLow(double l){
+    public static void setLow(double l){
         low = l;
         if(mTvLow != null) {
             mTvLow.setText((int)low + "");
+        }
+    }
+
+    public static void setHigh(double h){
+        high = h;
+        if(mTvHigh != null) {
+            mTvHigh.setText((int)high + "");
+        }
+    }
+
+    public static void setWind(double w){
+        wind = w;
+        if(mTvWind != null) {
+            mTvWind.setText(wind + " km/h");
+        }
+    }
+
+    public static void setHumidity(double h){
+        humidity = h;
+        if(mTvHumidity != null) {
+            mTvHumidity.setText((int)(humidity * 100) + "%");
+        }
+    }
+
+    public static void setPrecipitation(double p){
+        precipitation = p;
+        if(mTvPreci != null) {
+            mTvPreci.setText((int)(precipitation * 100) + "%");
+        }
+    }
+
+    public static void setCloud(double c){
+        cloud = c;
+        if(mTvCloud != null) {
+            mTvCloud.setText((int)(cloud * 100) + "%");
+        }
+    }
+
+    public static void setSummary(String s){
+        summary = s;
+        if(mTvSummary != null) {
+            mTvSummary.setText(summary);
+        }
+    }
+
+    public static void setIcon(int i){
+        icon = i;
+        if(mIconWeather != null) {
+            Glide.with(context).load(icon).into(mIconWeather);
         }
     }
 }

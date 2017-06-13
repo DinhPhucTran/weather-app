@@ -7,16 +7,7 @@
     <com.github.mikephil.charting.charts.LineChart
         android:id="@+id/daily_chart"
         android:layout_width="match_parent"
-        android:layout_height="200dp"/>
-
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@id/daily_chart">
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:id="@+id/json_text"/>
-    </ScrollView>
+        android:layout_height="200dp"
+        android:layout_centerInParent="true"/>
 
 </RelativeLayout>

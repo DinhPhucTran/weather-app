@@ -31,11 +31,8 @@ public class ChartFragment extends Fragment {
 
     public static final String TAG = "---> ChartFragment";
 
-    private LineChart mDailyChart;
-    private List<Entry> mDailyEntries;
-    private TextView jsonText;
+    private static LineChart mDailyChart;
     private static ChartFragment fragment;
-    private static String location;
 
     public ChartFragment() {
         // Required empty public constructor
@@ -65,26 +62,13 @@ public class ChartFragment extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_chart, container, false);
         mDailyChart = (LineChart) view.findViewById(R.id.daily_chart);
-        jsonText = (TextView) view.findViewById(R.id.json_text);
-        if(location != null)
-            jsonText.setText(location);
-        mDailyEntries = new ArrayList<>();
-
-        mDailyEntries.add(new Entry(2, 25));
-        mDailyEntries.add(new Entry(3, 20));
-        mDailyEntries.add(new Entry(4, 21));
-        mDailyEntries.add(new Entry(5, 26));
-        mDailyEntries.add(new Entry(6, 28));
-        mDailyEntries.add(new Entry(7, 30));
-
-        LineDataSet dataSet = new LineDataSet(mDailyEntries, "Temp");
-        LineData lineData = new LineData(dataSet);
-        mDailyChart.setData(lineData);
-        mDailyChart.invalidate();
         return view;
     }
 
-    public void setJsonText(String text){
-        location = text;
+    public static void invalidateChart(){
+        LineDataSet dataSet = new LineDataSet(MainActivity.dailyLowEntries, "Temp");
+        LineData lineData = new LineData(dataSet);
+        mDailyChart.setData(lineData);
+        mDailyChart.invalidate();
     }
 }
