@@ -101,6 +101,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         // Set up the ViewPager with the sections adapter.
         mViewPager = (ViewPager) findViewById(R.id.container);
         mViewPager.setAdapter(mSectionsPagerAdapter);
+        mViewPager.setPadding(0, 0, 0, getNavigationBarHeight());
 
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(mViewPager);
@@ -110,6 +111,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                         | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
         }
 
         mJsonTask = new JsonTask();
@@ -119,6 +121,9 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         Criteria criteria = new Criteria();
         provider = mLocationManager.getBestProvider(criteria, false);
+        if(provider == null)
+            provider = "";
+
 
 //        Glide.with(this).load(R.drawable.bg_cloudy).into(mMainBg);
 //        Glide.with(this).load(R.drawable.bg_cloudy)
@@ -167,6 +172,15 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     public int getStatusBarHeight() {
         int result = 0;
         int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            result = getResources().getDimensionPixelSize(resourceId);
+        }
+        return result;
+    }
+
+    public int getNavigationBarHeight() {
+        int result = 0;
+        int resourceId = getResources().getIdentifier("navigation_bar_height", "dimen", "android");
         if (resourceId > 0) {
             result = getResources().getDimensionPixelSize(resourceId);
         }
@@ -288,7 +302,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
             mDailyJsonObject = mJsonObjet.getJSONObject("daily");
             mDailyDataArray = mDailyJsonObject.getJSONArray("data");
 
-            MainFragment.temp = mCurrentJsonObject.getDouble("temperature");
+            //MainFragment.temp = mCurrentJsonObject.getDouble("temperature");
+            MainFragment.getInstance().setTemp(mCurrentJsonObject.getDouble("temperature"));
             MainFragment.summary = mCurrentJsonObject.getString("summary");
             MainFragment.low = mDailyDataArray.getJSONObject(0).getDouble("temperatureMin");
             MainFragment.high = mDailyDataArray.getJSONObject(0).getDouble("temperatureMax");
