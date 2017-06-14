@@ -46,7 +46,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
@@ -309,13 +311,25 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
             mCurrentJsonObject = mJsonObjet.getJSONObject("currently");
             mDailyJsonObject = mJsonObjet.getJSONObject("daily");
             mDailyDataArray = mDailyJsonObject.getJSONArray("data");
+            int l = mDailyDataArray.length();
+            String[] dailyLabels = new String[l];
+            SimpleDateFormat df = new SimpleDateFormat("EEE");
+            Calendar calendar = Calendar.getInstance();
 
             dailyLowEntries.clear();
-            JSONObject daily;
-            for(int i = 0; i < mDailyDataArray.length(); i++) {
-                daily = mDailyDataArray.getJSONObject(i);
-                dailyLowEntries.add(new Entry((float)daily.getLong("time"), (float)daily.getDouble("temperatureMin")));
+            dailyHighEntries.clear();
+            JSONObject dailyObject;
+            for(int i = 0; i < l; i++) {
+                dailyObject = mDailyDataArray.getJSONObject(i);
+                dailyLowEntries.add(new Entry((float)i, (float)dailyObject.getDouble("temperatureMin")));
+                dailyHighEntries.add(new Entry((float)i, (float)dailyObject.getDouble("temperatureMax")));
+                calendar.setTimeInMillis(dailyObject.getLong("time") * 1000);
+                dailyLabels[i] = df.format(calendar.getTime());
+                Log.d(TAG, dailyObject.getLong("time") + ": " + df.format(calendar.getTime()));
             }
+
+            ChartFragment.setDailyLabels(dailyLabels);
+
             ChartFragment.invalidateChart();
 
             //MainFragment.temp = mCurrentJsonObject.getDouble("temperature");
@@ -360,9 +374,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                 setBackground(R.drawable.bg_rain);
                 MainFragment.setIcon(R.drawable.rain);
             }
-
-            getSupportFragmentManager().beginTransaction().detach(MainFragment.getInstance()).commit();
-            getSupportFragmentManager().beginTransaction().attach(MainFragment.getInstance()).commit();
 
         } catch (JSONException e) {
             e.printStackTrace();
