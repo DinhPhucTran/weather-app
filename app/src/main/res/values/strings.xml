@@ -9,7 +9,10 @@
     <string name="humidity">HUMIDITY</string>
     <string name="precipitation">PRECIPITATION</string>
     <string name="cloud_cover">CLOUD COVER</string>
+    <string name="daily_temp">Daily Temperature</string>
+    <string name="hourly_temp">Hourly Temperature</string>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="title_activity_maps">Map</string>
 </resources>

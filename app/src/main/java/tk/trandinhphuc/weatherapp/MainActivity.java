@@ -55,6 +55,7 @@ import java.util.Locale;
 import jp.wasabeef.glide.transformations.BlurTransformation;
 import tk.trandinhphuc.weatherapp.fragment.ChartFragment;
 import tk.trandinhphuc.weatherapp.fragment.MainFragment;
+import tk.trandinhphuc.weatherapp.fragment.MapFragment;
 
 public class MainActivity extends AppCompatActivity implements LocationListener, AsyncResponse {
 
@@ -62,7 +63,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
 
     private SectionsPagerAdapter mSectionsPagerAdapter;
 
-    private ViewPager mViewPager;
+    public static ViewPager mViewPager;
     private CoordinatorLayout mMainLayout;
     private AppBarLayout mAppBarLayout;
     private View mBlurView;
@@ -87,6 +88,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
 
     public static List<Entry> dailyLowEntries;
     public static List<Entry> dailyHighEntries;
+    public static List<Entry> hourlyEntries;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -123,6 +125,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
 
         dailyLowEntries = new ArrayList<>();
         dailyHighEntries = new ArrayList<>();
+        hourlyEntries = new ArrayList<>();
 
         mJsonTask = new JsonTask();
         mJsonTask.delegate = this;
@@ -311,26 +314,39 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
             mCurrentJsonObject = mJsonObjet.getJSONObject("currently");
             mDailyJsonObject = mJsonObjet.getJSONObject("daily");
             mDailyDataArray = mDailyJsonObject.getJSONArray("data");
-            int l = mDailyDataArray.length();
-            String[] dailyLabels = new String[l];
+            int l1 = mDailyDataArray.length();
+            String[] dailyLabels = new String[l1];
             SimpleDateFormat df = new SimpleDateFormat("EEE");
             Calendar calendar = Calendar.getInstance();
 
             dailyLowEntries.clear();
             dailyHighEntries.clear();
             JSONObject dailyObject;
-            for(int i = 0; i < l; i++) {
+            for(int i = 0; i < l1; i++) {
                 dailyObject = mDailyDataArray.getJSONObject(i);
-                dailyLowEntries.add(new Entry((float)i, (float)dailyObject.getDouble("temperatureMin")));
-                dailyHighEntries.add(new Entry((float)i, (float)dailyObject.getDouble("temperatureMax")));
+                dailyLowEntries.add(new Entry(i, (int)dailyObject.getDouble("temperatureMin")));
+                dailyHighEntries.add(new Entry(i, (int)dailyObject.getDouble("temperatureMax")));
                 calendar.setTimeInMillis(dailyObject.getLong("time") * 1000);
                 dailyLabels[i] = df.format(calendar.getTime());
-                Log.d(TAG, dailyObject.getLong("time") + ": " + df.format(calendar.getTime()));
             }
 
             ChartFragment.setDailyLabels(dailyLabels);
+            ChartFragment.invalidateDailyChart();
 
-            ChartFragment.invalidateChart();
+            JSONArray hourlyArray = mJsonObjet.getJSONObject("hourly").getJSONArray("data");
+            hourlyEntries.clear();
+            JSONObject hourlyObject;
+            int l2 = hourlyArray.length();
+            String[] hourlyLabels = new String[l2];
+            SimpleDateFormat dfHour = new SimpleDateFormat("HH:mm");
+            for(int i = 0; i < l2; i++) {
+                hourlyObject = hourlyArray.getJSONObject(i);
+                hourlyEntries.add(new Entry(i, (int)hourlyObject.getDouble("temperature")));
+                hourlyLabels[i] = dfHour.format(hourlyObject.getLong("time") * 1000);
+            }
+
+            ChartFragment.setHourlyLabels(hourlyLabels);
+            ChartFragment.invalidateHourlyChart();
 
             //MainFragment.temp = mCurrentJsonObject.getDouble("temperature");
             MainFragment.setTemp(mCurrentJsonObject.getDouble("temperature"));
@@ -397,6 +413,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                     return MainFragment.newInstance();
                 case 1:
                     return ChartFragment.newInstance();
+                case 2:
+                    return MapFragment.getInstance();
 
             }
             return MainFragment.newInstance();
