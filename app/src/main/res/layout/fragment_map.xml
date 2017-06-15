@@ -13,11 +13,51 @@
             android:orientation="vertical"
             android:paddingLeft="16dp"
             android:paddingRight="16dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/temp_map"
+                android:gravity="center_horizontal"
+                android:textColor="@color/colorTextWhite"
+                android:textSize="20sp"
+                android:layout_marginTop="10dp"/>
+
             <com.google.android.gms.maps.MapView
                 android:layout_width="match_parent"
                 android:layout_height="200dp"
                 android:layout_marginTop="5dp"
                 android:id="@+id/map_temp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/preci_map"
+                android:gravity="center_horizontal"
+                android:textColor="@color/colorTextWhite"
+                android:textSize="20sp"
+                android:layout_marginTop="10dp"/>
+
+            <com.google.android.gms.maps.MapView
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:layout_marginTop="5dp"
+                android:id="@+id/map_preci"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/cloud_map"
+                android:gravity="center_horizontal"
+                android:textColor="@color/colorTextWhite"
+                android:textSize="20sp"
+                android:layout_marginTop="10dp"/>
+
+            <com.google.android.gms.maps.MapView
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:layout_marginTop="5dp"
+                android:id="@+id/map_cloud"/>
         </LinearLayout>
     </ScrollView>
 

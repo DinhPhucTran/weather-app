@@ -2,6 +2,7 @@ package tk.trandinhphuc.weatherapp;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Criteria;
@@ -40,6 +41,11 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.github.mikephil.charting.data.Entry;
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.common.GooglePlayServicesRepairableException;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlaceAutocomplete;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -60,15 +66,16 @@ import tk.trandinhphuc.weatherapp.fragment.MapFragment;
 public class MainActivity extends AppCompatActivity implements LocationListener, AsyncResponse {
 
     static final String TAG = "---> MainActivity";
+    int PLACE_AUTOCOMPLETE_REQUEST_CODE = 1;
 
     private SectionsPagerAdapter mSectionsPagerAdapter;
 
     public static ViewPager mViewPager;
     private CoordinatorLayout mMainLayout;
     private AppBarLayout mAppBarLayout;
-    private View mBlurView;
     private ImageView mMainBg;
     private ImageView mBlurBg;
+    private TextView mCityToolbar;
 
     private LocationManager mLocationManager;
     private String provider;
@@ -99,10 +106,27 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         mAppBarLayout = (AppBarLayout) findViewById(R.id.appbar);
         mMainBg = (ImageView) findViewById(R.id.mainBg);
         mBlurBg = (ImageView) findViewById(R.id.blurBg);
+        //mCityToolbar = (TextView) findViewById(R.id.city_toolbar);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         toolbar.setPadding(0, getStatusBarHeight(), 0, 0);
+
+        toolbar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                try {
+                    Intent intent = new PlaceAutocomplete.IntentBuilder(PlaceAutocomplete.MODE_OVERLAY)
+                            .build(MainActivity.this);
+                    startActivityForResult(intent, PLACE_AUTOCOMPLETE_REQUEST_CODE);
+                } catch (GooglePlayServicesRepairableException e) {
+                    // TODO: Handle the error.
+                } catch (GooglePlayServicesNotAvailableException e) {
+                    // TODO: Handle the error.
+                }
+            }
+        });
+
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
@@ -208,6 +232,25 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     }
 
     @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == PLACE_AUTOCOMPLETE_REQUEST_CODE) {
+            if (resultCode == RESULT_OK) {
+                Place place = PlaceAutocomplete.getPlace(this, data);
+                lat = place.getLatLng().latitude;
+                lng = place.getLatLng().longitude;
+                onLocationChanged(place.getName().toString());
+            } else if (resultCode == PlaceAutocomplete.RESULT_ERROR) {
+                Status status = PlaceAutocomplete.getStatus(this, data);
+                // TODO: Handle the error.
+                Log.i(TAG, status.getStatusMessage());
+
+            } else if (resultCode == RESULT_CANCELED) {
+                // The user canceled the operation.
+            }
+        }
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -230,33 +273,33 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     }
 
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
+//    @Override
+//    public boolean onCreateOptionsMenu(Menu menu) {
+//        // Inflate the menu; this adds items to the action bar if it is present.
+//        getMenuInflater().inflate(R.menu.menu_main, menu);
+//        return true;
+//    }
+//
+//    @Override
+//    public boolean onOptionsItemSelected(MenuItem item) {
+//        // Handle action bar item clicks here. The action bar will
+//        // automatically handle clicks on the Home/Up button, so long
+//        // as you specify a parent activity in AndroidManifest.xml.
+//        int id = item.getItemId();
+//
+//        //noinspection SimplifiableIfStatement
+//        if (id == R.id.action_settings) {
+//            return true;
+//        }
+//
+//        return super.onOptionsItemSelected(item);
+//    }
 
     @Override
     public void onLocationChanged(Location location) {
         lat = location.getLatitude();
         lng = location.getLongitude();
-        Toast.makeText(this, "Location changed to " + location.toString(), Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Location changed", Toast.LENGTH_SHORT).show();
 
         try {
             mAddresses = mGeoCoder.getFromLocation(lat, lng, 1);
@@ -266,11 +309,19 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                 address.append(mAddresses.get(0).getAddressLine(i));
             }
             String city = mAddresses.get(0).getLocality();
-            MainFragment.getInstance().setCity(city);
+            setTitle(city);
         } catch (IOException e) {
             e.printStackTrace();
         }
         mJsonTask.execute("http://www.weathersite.somee.com/api/Weather?lat=" + lat + "&lng=" + lng);
+    }
+
+    public void onLocationChanged(String cityName) {
+        Toast.makeText(this, "Location changed", Toast.LENGTH_SHORT).show();
+        JsonTask task = new JsonTask();
+        task.delegate = this;
+        setTitle(cityName);
+        task.execute("http://www.weathersite.somee.com/api/Weather?lat=" + lat + "&lng=" + lng);
     }
 
     @Override

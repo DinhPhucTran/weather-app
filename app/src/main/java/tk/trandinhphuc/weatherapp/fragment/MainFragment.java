@@ -30,7 +30,7 @@ public class MainFragment extends Fragment {
     private static TextView mTvPreci;
     private static TextView mTvCloud;
 
-    private static String mCity;
+    //private static String mCity;
     public static double temp;
     public static double low;
     public static double high;
@@ -76,7 +76,6 @@ public class MainFragment extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_main, container, false);
 
-        mTvCity = (TextView) view.findViewById(R.id.tv_city);
         mIconWeather = (ImageView) view.findViewById(R.id.icon_weather);
         mTvTemp = (TextView) view.findViewById(R.id.tv_temp);
         mTvSummary = (TextView) view.findViewById(R.id.tv_summary);
@@ -86,9 +85,6 @@ public class MainFragment extends Fragment {
         mTvHumidity = (TextView) view.findViewById(R.id.tv_humidity);
         mTvPreci = (TextView) view.findViewById(R.id.tv_preci);
         mTvCloud = (TextView) view.findViewById(R.id.tv_cloud);
-
-        if(mCity != null)
-            mTvCity.setText(mCity);
 
         return view;
     }
@@ -125,12 +121,6 @@ public class MainFragment extends Fragment {
     @Override
     public void onDetach() {
         super.onDetach();
-    }
-
-    public void setCity(String city){
-        mCity = city;
-        if(mTvCity != null)
-            mTvCity.setText(mCity);
     }
 
     public static void setTemp(double t){

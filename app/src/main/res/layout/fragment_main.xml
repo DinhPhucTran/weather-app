@@ -4,16 +4,6 @@
                 android:layout_height="match_parent"
                 tools:context="tk.trandinhphuc.weatherapp.fragment.MainFragment">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/main_panel"
-        android:layout_centerHorizontal="true"
-        android:text="City"
-        android:textSize="30sp"
-        android:textColor="@color/colorTextWhite"
-        android:id="@+id/tv_city"/>
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -21,7 +11,7 @@
         android:orientation="vertical"
         android:gravity="center_horizontal"
         android:layout_centerInParent="true"
-        android:paddingBottom="70dp">
+        android:paddingBottom="90dp">
 
         <LinearLayout
             android:id="@+id/temp"
